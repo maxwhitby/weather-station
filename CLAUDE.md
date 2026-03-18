@@ -4,6 +4,20 @@
 
 Displays real-time wind data from an Ecowitt weather station on a GeekMagic SmallTV Ultra (ESP8266 + 240x240 LCD). Uses the same proxy-rendered architecture as the Agile electricity display: server renders PIL images, converts to RGB565, ESP8266 streams and pushes to LCD.
 
+## Current Status
+
+**Fully deployed and operational** as of 2026-03-18.
+
+- Ecowitt API credentials configured (local + production server)
+- Proxy server deployed to Oracle Cloud (weather endpoints live)
+- First ESP8266 device flashed via USB serial (`/dev/cu.usbserial-0001`)
+- Device MAC: `08:3A:8D:D5:FB:29`
+- Firmware size: 366KB flash (35%), 36KB RAM (44%)
+
+### Recent Changes
+
+- **2026-03-18**: Deployed weather endpoints to production proxy server. Added Ecowitt credentials to both local `secrets.local` and production `/opt/radar-proxy/secrets.local`. Flashed first SmallTV Ultra device.
+
 ## Hardware Platform
 
 ### GeekMagic SmallTV Ultra
@@ -18,6 +32,7 @@ Displays real-time wind data from an Ecowitt weather station on a GeekMagic Smal
 | **Firmware** | `smalltv_ultra/src/main.cpp` |
 | **Hostname** | `weather-display.local` |
 | **AP SSID** | `WeatherDisplay-Setup` |
+| **Device MAC** | `08:3A:8D:D5:FB:29` |
 
 #### ESP8266 Pinout
 
@@ -53,12 +68,12 @@ https://api.ecowitt.net/api/v3/device/real_time
 
 Stored in `proxy/secrets.local` (gitignored) or env vars:
 ```
-ECOWITT_APPLICATION_KEY=xxx    # From ecowitt.net → API Keys page
-ECOWITT_API_KEY=xxx            # User API key
-ECOWITT_MAC=AA:BB:CC:DD:EE:FF  # From WSView app or gateway web interface
+ECOWITT_APPLICATION_KEY=xxx    # From ecowitt.net → API Keys page (app: ecowitt_display_app_01)
+ECOWITT_API_KEY=xxx            # User API key (key: ecowitt_display_api_01)
+ECOWITT_MAC=3C:8A:1F:26:B5:4B  # Ecowitt gateway MAC
 ```
 
-On the production server, credentials are in `/opt/radar-proxy/secrets.local`.
+On the production server, credentials are in `/opt/radar-proxy/secrets.local` (deployed 2026-03-18).
 
 ## Proxy Server
 
