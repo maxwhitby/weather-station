@@ -16,7 +16,7 @@ Displays real-time wind data from an Ecowitt weather station on a GeekMagic Smal
 
 ### Recent Changes
 
-- **2026-03-18**: Deployed weather endpoints to production proxy server. Added Ecowitt credentials to both local `secrets.local` and production `/opt/radar-proxy/secrets.local`. Flashed first SmallTV Ultra device.
+- **2026-03-18**: Deployed weather endpoints to production proxy server. Added Ecowitt credentials to both local `secrets.local` and production `/opt/radar-proxy/secrets.local`. Flashed first SmallTV Ultra device. Redesigned display: yellow text theme, green arrow (red at gale 39+ mph), added km/h line below mph, tuned compass rose size/position through multiple iterations.
 
 ## Hardware Platform
 
@@ -111,14 +111,14 @@ The weather endpoints are part of the unified radar proxy server in the DISPLAYS
 
 ```
 +------------------------------------------+
-|  WIND                          16:34     |  Title + clock (y=3)
-|  12.4 mph        Gust 18.7              |  Speed + gust (y=26)
-|                                          |
+|  WIND                          16:34     |  Title + clock (y=3, yellow)
+|  12.4 mph        Gust 18.7              |  Speed + gust mph (y=26)
+|  20.0 km/h              30.1            |  Speed + gust km/h (y=54)
 |              N                           |
 |         NW       NE                      |
 |                                          |
-|      W      [compass]     E              |  ~144px diameter rose
-|              [arrow]                     |  Arrow shows wind FROM direction
+|      W      [compass]     E              |  ~128px diameter rose
+|              [arrow]                     |  Green arrow, red at gale
 |         SW       SE                      |
 |              S                           |
 |                                          |
@@ -128,22 +128,24 @@ The weather endpoints are part of the unified radar proxy server in the DISPLAYS
 
 ### Compass Rose
 
-- Center: (120, 132), radius: 72px
-- Arrow: triangular, colored by Beaufort scale, points FROM wind direction
-- Cardinal labels (N/S/E/W) white, intercardinals dim grey
+- Center: (120, 142), radius: 64px
+- Arrow: green `(0, 220, 60)`, turns red `(220, 40, 40)` at gale force (39+ mph / Beaufort 8)
+- Beefed-up arrowhead: 20×14px triangle, shaft width 4px
+- Cardinal labels (N/S/E/W) light grey, intercardinals dim grey
 - Tick marks at 22.5-degree intervals (16 points)
-- Center dot in wind color
+- Center dot in arrow color
 
-### Wind Speed Colors (Beaufort scale)
+### Color Scheme
 
-| Range | Color | RGB |
-|-------|-------|-----|
-| Calm (<1 mph) | Light grey | (150, 150, 160) |
-| Light (1-7) | Cyan | (0, 200, 220) |
-| Moderate (8-18) | Green | (0, 180, 80) |
-| Fresh/Strong (19-31) | Yellow | (220, 180, 0) |
-| Gale (32-46) | Orange | (230, 120, 0) |
-| Storm (47+) | Red | (220, 40, 40) |
+| Element | Color | RGB |
+|---------|-------|-----|
+| Title / speed text | Yellow | (220, 200, 0) |
+| Gust text / km/h | Dim yellow | (180, 170, 60) |
+| Footer | Dim yellow | (160, 150, 50) |
+| Cardinal labels | Light grey | (180, 180, 190) |
+| Intercardinal labels | Dim grey | (80, 80, 100) |
+| Arrow (normal) | Bright green | (0, 220, 60) |
+| Arrow (gale 39+ mph) | Red | (220, 40, 40) |
 
 Bottom of display is left black as the SmallTV Ultra frame masks the bottom ~6px.
 

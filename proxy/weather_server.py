@@ -43,14 +43,15 @@ ECOWITT_MAC = None
 # Colors
 WEATHER_COLORS = {
     'background': (10, 10, 20),
-    'title': (0, 200, 220),           # Cyan
-    'speed_text': (255, 255, 255),    # White
-    'gust_text': (180, 180, 200),     # Light grey
-    'cardinal': (255, 255, 255),      # White (N/S/E/W)
+    'title': (220, 200, 0),           # Yellow
+    'speed_text': (220, 200, 0),      # Yellow
+    'gust_text': (180, 170, 60),      # Dim yellow
+    'cardinal': (180, 180, 190),      # Light grey (N/S/E/W)
     'intercardinal': (80, 80, 100),   # Dim grey (NE/NW/SE/SW)
     'tick': (60, 60, 80),             # Tick marks
     'compass_ring': (40, 40, 60),     # Compass outer ring
-    'footer': (120, 120, 140),        # Footer text
+    'footer': (160, 150, 50),         # Dim yellow
+    'arrow': (0, 220, 60),            # Bright green (fixed color for arrow)
     'arrow_calm': (150, 150, 160),    # Calm wind
     'arrow_light': (0, 200, 220),     # Light wind (cyan)
     'arrow_moderate': (0, 180, 80),   # Moderate (green)
@@ -271,7 +272,7 @@ def render_wind_display(wind_data, width=240, height=240):
     now_str = now_uk.strftime('%H:%M')
 
     # ---- Header ----
-    draw.rectangle([0, 0, width, 48], fill=(15, 15, 30))
+    draw.rectangle([0, 0, width, 64], fill=(15, 15, 30))
 
     # Title
     draw.text((8, 3), "WIND", font=font_title, fill=WEATHER_COLORS['title'])
@@ -281,20 +282,29 @@ def render_wind_display(wind_data, width=240, height=240):
     time_w = time_bbox[2] - time_bbox[0]
     draw.text((width - time_w - 8, 6), now_str, font=font_time, fill=(100, 100, 120))
 
-    # Speed + gust
-    wind_color = get_wind_color(speed)
-    speed_str = f"{speed:.1f} mph"
-    draw.text((8, 26), speed_str, font=font_speed, fill=wind_color)
+    # Speed + gust (mph)
+    speed_str = f"{speed:.0f} mph" if speed >= 100 else f"{speed:.1f} mph"
+    draw.text((8, 26), speed_str, font=font_speed, fill=WEATHER_COLORS['speed_text'])
 
-    gust_str = f"Gust {gust:.1f}"
+    gust_str = f"Gust {gust:.0f}" if gust >= 100 else f"Gust {gust:.1f}"
     gust_bbox = draw.textbbox((0, 0), gust_str, font=font_gust)
     gust_w = gust_bbox[2] - gust_bbox[0]
     draw.text((width - gust_w - 8, 30), gust_str, font=font_gust, fill=WEATHER_COLORS['gust_text'])
 
+    # km/h line
+    speed_kmh = speed * 1.60934
+    gust_kmh = gust * 1.60934
+    kmh_speed_str = f"{speed_kmh:.0f} km/h" if speed_kmh >= 100 else f"{speed_kmh:.1f} km/h"
+    kmh_gust_str = f"{gust_kmh:.0f}" if gust_kmh >= 100 else f"{gust_kmh:.1f}"
+    draw.text((8, 54), kmh_speed_str, font=font_gust, fill=WEATHER_COLORS['gust_text'])
+    kmh_gust_bbox = draw.textbbox((0, 0), kmh_gust_str, font=font_gust)
+    kmh_gust_w = kmh_gust_bbox[2] - kmh_gust_bbox[0]
+    draw.text((width - kmh_gust_w - 8, 54), kmh_gust_str, font=font_gust, fill=WEATHER_COLORS['gust_text'])
+
     # ---- Compass Rose ----
     cx = width // 2      # Center x
-    cy = 132              # Center y
-    radius = 72           # Compass radius
+    cy = 142              # Center y (shifted down for km/h line)
+    radius = 64           # Compass radius
 
     # Outer ring
     draw.ellipse([cx - radius - 2, cy - radius - 2, cx + radius + 2, cy + radius + 2],
@@ -350,9 +360,8 @@ def render_wind_display(wind_data, width=240, height=240):
         draw.text((lx - lw // 2, ly - lh // 2), label, font=font_inter,
                   fill=WEATHER_COLORS['intercardinal'])
 
-    # Wind direction arrow (points FROM the wind direction)
-    # Arrow points inward from the direction the wind comes FROM
-    arrow_color = get_wind_color(speed)
+    # Wind direction arrow (green, red at gale force Beaufort 8 / 39+ mph)
+    arrow_color = WEATHER_COLORS['arrow_storm'] if speed >= 39 else WEATHER_COLORS['arrow']
     arrow_angle_rad = math.radians(direction - 90)  # direction wind comes FROM
 
     # Arrow tip (pointing toward center from the FROM direction)
@@ -367,11 +376,11 @@ def render_wind_display(wind_data, width=240, height=240):
     tail_y = cy + int(tail_r * math.sin(arrow_angle_rad))
 
     # Arrow shaft
-    draw.line([(tail_x, tail_y), (tip_x, tip_y)], fill=arrow_color, width=3)
+    draw.line([(tail_x, tail_y), (tip_x, tip_y)], fill=arrow_color, width=4)
 
-    # Arrowhead (triangle at tip)
-    head_len = 14
-    head_width = 8
+    # Arrowhead (beefed up)
+    head_len = 20
+    head_width = 14
     # Direction from tail to tip
     dx = tip_x - tail_x
     dy = tip_y - tail_y
