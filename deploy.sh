@@ -9,8 +9,10 @@
 set -e
 
 # Paths
-DISPLAYS_PROXY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../DISPLAYS/METOFFICE/radar_proxy" && pwd)"
-SSH_KEY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../DISPLAYS" && pwd)/ssh-key-2025-12-23.key"
+# The DISPLAYS repo lives in iCloud (MERCURY archive), not next to this project.
+DISPLAYS_BASE="${DISPLAYS_BASE:-/Users/maxwhitby/Library/Mobile Documents/com~apple~CloudDocs/MERCURY 20240717 /ACTIVE/CODE/MCP_FILESYSTEM/DISPLAYS}"
+DISPLAYS_PROXY="$DISPLAYS_BASE/METOFFICE/radar_proxy"
+SSH_KEY="$DISPLAYS_BASE/ssh-key-2025-12-23.key"
 SERVER="ubuntu@130.162.190.206"
 REMOTE_PATH="/opt/radar-proxy/radar_server.py"
 
