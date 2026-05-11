@@ -226,10 +226,14 @@ def fetch_wind_data():
             logger.error("No wind data in response")
             return None
 
+        # Wind vane on this station is mounted 180° offset — correct in software
+        # so the arrow and compass label both reflect the true source direction.
+        WIND_DIRECTION_OFFSET = 180
+        raw_dir = int(float(wind.get('wind_direction', {}).get('value', 0)))
         result = {
             'wind_speed': float(wind.get('wind_speed', {}).get('value', 0)),
             'wind_gust': float(wind.get('wind_gust', {}).get('value', 0)),
-            'wind_direction': int(float(wind.get('wind_direction', {}).get('value', 0))),
+            'wind_direction': (raw_dir + WIND_DIRECTION_OFFSET) % 360,
         }
 
         # Get outdoor temperature if available
@@ -360,60 +364,42 @@ def render_wind_display(wind_data, width=240, height=240):
         draw.text((lx - lw // 2, ly - lh // 2), label, font=font_inter,
                   fill=WEATHER_COLORS['intercardinal'])
 
-    # Wind direction arrow (green, red at gale force Beaufort 8 / 39+ mph)
+    # Wind direction arrow — shaft anchored at the centre extends out to the inner
+    # edge of the ring on the FROM direction (so the shaft visually spans the
+    # upwind side). The arrowhead sits mid-shaft and points INWARD toward the
+    # centre — i.e., in the direction the wind is blowing (downwind).
     arrow_color = WEATHER_COLORS['arrow_storm'] if speed >= 39 else WEATHER_COLORS['arrow']
-    arrow_angle_rad = math.radians(direction - 90)  # direction wind comes FROM
+    from_angle_rad = math.radians(direction - 90)  # FROM direction (upwind)
 
-    # Arrow tip (pointing toward center from the FROM direction)
-    # The arrow extends from outside toward center
-    tip_r = 12  # How close tip gets to center
-    tail_r = radius - 14  # Arrow tail near the ring
+    shaft_r = radius - 6  # shaft extends to just inside the ring
+    shaft_end_x = cx + int(shaft_r * math.cos(from_angle_rad))
+    shaft_end_y = cy + int(shaft_r * math.sin(from_angle_rad))
 
-    tip_x = cx + int(tip_r * math.cos(arrow_angle_rad + math.pi))
-    tip_y = cy + int(tip_r * math.sin(arrow_angle_rad + math.pi))
+    # Shaft from centre to upwind end
+    draw.line([(cx, cy), (shaft_end_x, shaft_end_y)], fill=arrow_color, width=4)
 
-    tail_x = cx + int(tail_r * math.cos(arrow_angle_rad))
-    tail_y = cy + int(tail_r * math.sin(arrow_angle_rad))
-
-    # Arrow shaft
-    draw.line([(tail_x, tail_y), (tip_x, tip_y)], fill=arrow_color, width=4)
-
-    # Arrowhead (beefed up)
-    head_len = 20
-    head_width = 14
-    # Direction from tail to tip
-    dx = tip_x - tail_x
-    dy = tip_y - tail_y
-    length = math.sqrt(dx * dx + dy * dy)
-    if length > 0:
-        ux = dx / length
-        uy = dy / length
-        # Perpendicular
-        px = -uy
-        py = ux
-        # Arrowhead base
-        base_x = tip_x - ux * head_len
-        base_y = tip_y - uy * head_len
-        points = [
-            (tip_x, tip_y),
-            (int(base_x + px * head_width / 2), int(base_y + py * head_width / 2)),
-            (int(base_x - px * head_width / 2), int(base_y - py * head_width / 2)),
-        ]
-        draw.polygon(points, fill=arrow_color)
-
-    # Small tail feather at the tail end
-    tail_len = 8
-    tail_width = 6
-    tail_base_x = tail_x - ux * tail_len
-    tail_base_y = tail_y - uy * tail_len
-    tail_points = [
-        (tail_x, tail_y),
-        (int(tail_base_x + px * tail_width / 2), int(tail_base_y + py * tail_width / 2)),
-        (int(tail_base_x - px * tail_width / 2), int(tail_base_y - py * tail_width / 2)),
+    # Arrowhead at midpoint of shaft, apex pointing toward centre (downwind)
+    mid_x = (cx + shaft_end_x) / 2
+    mid_y = (cy + shaft_end_y) / 2
+    head_len = 16
+    head_width = 12
+    # Unit vector along the shaft pointing toward centre (downwind direction)
+    ux = (cx - shaft_end_x) / shaft_r
+    uy = (cy - shaft_end_y) / shaft_r
+    px = -uy
+    py = ux
+    apex_x = mid_x + ux * head_len / 2
+    apex_y = mid_y + uy * head_len / 2
+    base_x = mid_x - ux * head_len / 2
+    base_y = mid_y - uy * head_len / 2
+    points = [
+        (int(apex_x), int(apex_y)),
+        (int(base_x + px * head_width / 2), int(base_y + py * head_width / 2)),
+        (int(base_x - px * head_width / 2), int(base_y - py * head_width / 2)),
     ]
-    draw.polygon(tail_points, fill=arrow_color)
+    draw.polygon(points, fill=arrow_color)
 
-    # Center dot
+    # Centre pivot dot
     draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=arrow_color)
 
     # ---- Footer ----

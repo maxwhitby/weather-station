@@ -16,6 +16,7 @@ Displays real-time wind data from an Ecowitt weather station on a GeekMagic Smal
 
 ### Recent Changes
 
+- **2026-05-11**: Reworked the wind arrow. Shaft is anchored at the compass centre and extends to the ring's inner edge on the FROM direction (so the shaft visually spans the upwind side). Arrowhead sits **mid-shaft** and points **inward toward the centre** — i.e., in the direction the wind is blowing (downwind). Centre pivot dot retained. Also discovered the wind vane is mounted 180° offset, so applied a `WIND_DIRECTION_OFFSET = 180` correction at the Ecowitt data fetcher in both `proxy/weather_server.py` and the production `radar_server.py`. This flips both the arrow and the footer compass label/degrees together. **Not yet deployed to the live proxy server.**
 - **2026-03-18**: Deployed weather endpoints to production proxy server. Added Ecowitt credentials to both local `secrets.local` and production `/opt/radar-proxy/secrets.local`. Flashed first SmallTV Ultra device. Redesigned display: yellow text theme, green arrow (red at gale 39+ mph), added km/h line below mph, tuned compass rose size/position through multiple iterations.
 
 ## Hardware Platform
@@ -116,10 +117,10 @@ The weather endpoints are part of the unified radar proxy server in the DISPLAYS
 |  20.0 km/h              30.1            |  Speed + gust km/h (y=54)
 |              N                           |
 |         NW       NE                      |
-|                                          |
-|      W      [compass]     E              |  ~128px diameter rose
-|              [arrow]                     |  Green arrow, red at gale
-|         SW       SE                      |
+|              ↑                           |  Clock-hand arrow,
+|      W       ●     E                     |  anchored at centre,
+|                                          |  tip on inner edge of ring,
+|         SW       SE                      |  pointing at FROM direction
 |              S                           |
 |                                          |
 |  SSW  213°            Beaufort 4         |  Footer (y=212)
@@ -129,11 +130,13 @@ The weather endpoints are part of the unified radar proxy server in the DISPLAYS
 ### Compass Rose
 
 - Center: (120, 142), radius: 64px
-- Arrow: green `(0, 220, 60)`, turns red `(220, 40, 40)` at gale force (39+ mph / Beaufort 8)
-- Beefed-up arrowhead: 20×14px triangle, shaft width 4px
+- Arrow shaft: anchored at the centre, extends to the inner edge of the ring (r = radius − 6) on the **FROM** direction (upwind). Width 4px.
+- Arrowhead: positioned **mid-shaft**, apex points **inward toward the centre** (downwind / the direction the wind is blowing). 16×12px triangle.
+- Arrow colour: green `(0, 220, 60)`, turns red `(220, 40, 40)` at gale force (39+ mph / Beaufort 8)
+- Centre pivot dot: 4px radius in arrow colour
 - Cardinal labels (N/S/E/W) light grey, intercardinals dim grey
 - Tick marks at 22.5-degree intervals (16 points)
-- Center dot in arrow color
+- **Wind direction offset**: a 180° offset is applied in the data fetcher (`WIND_DIRECTION_OFFSET = 180`) because the vane on this station is mounted backwards. Reset to 0 if the vane is ever realigned.
 
 ### Color Scheme
 
